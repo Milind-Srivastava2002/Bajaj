@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Employee Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    #searchInput {
+      width: 300px;
+      padding: 5px;
+    }
+
+    #designationFilter,
+    #skillsFilter {
+      width: 150px;
+      padding: 5px;
+      margin-right: 10px;
+    }
+
+    #searchResults {
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .no-results {
+      color: red;
+      font-style: italic;
+    }
+  </style>
+  <script>
+    function displayEmployee(employee) {
+      var table = document.getElementById('searchResults');
+
+      var row = table.insertRow();
+
+      var nameCell = row.insertCell();
+      nameCell.textContent = employee.name;
+
+      var skillsCell = row.insertCell();
+      skillsCell.textContent = employee.skills.join(', ');
+
+      var designationCell = row.insertCell();
+      designationCell.textContent = employee.designation;
+
+      var projectsCell = row.insertCell();
+      if (employee.projects) {
+        var projectsList = document.createElement('ul');
+        projectsCell.appendChild(projectsList);
+
+        for (var i = 0; i < employee.projects.length; i++) {
+          var project = employee.projects[i];
+          var projectItem = document.createElement('li');
+          projectItem.textContent = project.name;
+          projectsList.appendChild(projectItem);
+        }
+      }
+    }
+
+    function searchEmployee() {
+      var searchInput = document.getElementById('searchInput').value.toLowerCase().trim();
+      var designationFilter = document.getElementById('designationFilter').value.toLowerCase().trim();
+      var skillsFilter = document.getElementById('skillsFilter').value.toLowerCase().trim();
+      var table = document.getElementById('searchResults');
+
+      // Clear previous search results
+      while (table.rows.length > 1) {
+        table.deleteRow(1);
+      }
+
+      // Fetch data from index.json
+      fetch('index.json')
+        .then(response => response.json())
+        .then(data => {
+          var employees = data.employees;
+          var foundEmployees = [];
+
+          for (var i = 0; i < employees.length; i++) {
+            var employee = employees[i];
+            var found = false;
+
+            var nameMatch = employee.name && employee.name.toLowerCase().includes(searchInput);
+            var designationMatch = employee.designation && employee.designation.toLowerCase().includes(designationFilter);
+            var skillsMatch = employee.skills && employee.skills.some(skill => skill.toLowerCase().includes(skillsFilter));
+
+            if ((searchInput === '' || nameMatch) && (designationFilter === '' || designationMatch) && (skillsFilter === '' || skillsMatch)) {
+              foundEmployees.push(employee);
+              found = true;
+            }
+          }
+
+          if (foundEmployees.length > 0) {
+            for (var i = 0; i < foundEmployees.length; i++) {
+              displayEmployee(foundEmployees[i]);
+            }
+          } else {
+            var row = table.insertRow();
+            var messageCell = row.insertCell();
+            messageCell.colSpan = 3;
+            messageCell.classList.add('no-results');
+            messageCell.textContent = 'No results found.';
+          }
+        })
+        .catch(error => {
+          console.log('Error fetching data:', error);
+        });
+    }
+  </script>
+</head>
+
+<body>
+  <h1>Employee Search</h1>
+  <input type="text" id="searchInput" placeholder="Search by name">
+  <input type="text" id="designationFilter" placeholder="Filter by designation">
+  <input type="text" id="skillsFilter" placeholder="Filter by skills">
+  <button onclick="searchEmployee()">Search</button>
+  <table id="searchResults">
+    <tr>
+      <th>Name</th>
+      <th>Skills</th>
+      <th>Designation</th>
+      <th>Projects</th>
+    </tr>
+  </table>
+</body>
+
+</html>
